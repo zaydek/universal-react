@@ -1,7 +1,7 @@
 {
 	"scripts": {
-		"dev": "NODE_ENV=development node scripts/client.js && NODE_ENV=development node scripts/server.js",
-		"prod": "NODE_ENV=production node scripts/client.js && NODE_ENV=production node scripts/server.js"
+		"dev": "NODE_ENV=development node scripts/server.js && NODE_ENV=development node scripts/client.js",
+		"prod": "NODE_ENV=production node scripts/server.js && NODE_ENV=production node scripts/client.js"
 	},
 	"devDependencies": {
 		"esbuild": "^0.9.6",

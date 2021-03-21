@@ -5,7 +5,6 @@ module.exports = {
 	// prettier-ignore
 	define: {
 		"__DEV__":JSON.stringify(env !== "production"),
-		"NODE_ENV": JSON.stringify(env),
 		"process.env.NODE_ENV": JSON.stringify(env),
 	},
 	// Interpret JavaScript as JavaScript XML

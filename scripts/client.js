@@ -37,8 +37,7 @@ async function main() {
 
 		const buffer = await fs.promises.readFile("out/index.html")
 
-		let contents = ""
-		contents = buffer.toString()
+		let contents = buffer.toString()
 		contents = contents.replace(
 			/<script src="\.\/vendor[^"]+"><\/script>/,
 			`<script src="./vendor__${reactVersion}.esbuild.js"></script>`,

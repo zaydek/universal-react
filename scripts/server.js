@@ -1,4 +1,5 @@
 const common = require("./common")
+const fs = require("fs")
 const path = require("path")
 const React = require("react")
 const ReactDOMServer = require("react-dom/server")
@@ -19,13 +20,20 @@ async function run() {
 			// No-ops 'import React from "react"'
 			inject: ["scripts/shim_react.js"],
 		})
+
+		const mod = require(path.resolve("out/app.esbuild.ssr.js"))
+		const markup = ReactDOMServer.renderToString(React.createElement(mod.default))
+
+		const buffer = await fs.promises.readFile("out/index.html")
+
+		let contents = buffer.toString()
+		contents = contents.replace(/<div id="root">.*<\/div>$/m, `<div id="root">${markup}</div>`)
+
+		await fs.promises.writeFile("out/index.html", contents)
 	} catch (error) {
 		console.error(error)
 		process.exit(0)
 	}
-
-	const mod = require(path.resolve("out/app.esbuild.ssr.js"))
-	console.log(ReactDOMServer.renderToString(React.createElement(mod.default)))
 }
 
 run()
