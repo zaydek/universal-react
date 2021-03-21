@@ -1,7 +1,11 @@
 {
-  "devDependencies": {
-    "esbuild": "^0.9.6",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1"
-  }
+	"scripts": {
+		"dev": "NODE_ENV=development node scripts/client.js && NODE_ENV=development node scripts/server.js",
+		"prod": "NODE_ENV=production node scripts/client.js && NODE_ENV=production node scripts/server.js"
+	},
+	"devDependencies": {
+		"esbuild": "^0.9.6",
+		"react": "^17.0.1",
+		"react-dom": "^17.0.1"
+	}
 }

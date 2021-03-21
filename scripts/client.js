@@ -8,9 +8,6 @@ async function main() {
 			bundle: true,
 			entryPoints: ["scripts/shim_vendor.js"],
 			outfile: "out/vendor.esbuild.js",
-
-			// Etc.
-			minify: true,
 		})
 
 		await require("esbuild").build({
