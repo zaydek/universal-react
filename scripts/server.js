@@ -1,8 +1,7 @@
+const common = require("./common")
 const path = require("path")
 const React = require("react")
 const ReactDOMServer = require("react-dom/server")
-
-const common = require("./common")
 
 async function run() {
 	try {
@@ -20,7 +19,10 @@ async function run() {
 			// No-ops 'import React from "react"'
 			inject: ["scripts/shim_react.js"],
 		})
-	} catch {}
+	} catch (error) {
+		console.error(error)
+		process.exit(0)
+	}
 
 	const mod = require(path.resolve("out/app.esbuild.ssr.js"))
 	console.log(ReactDOMServer.renderToString(React.createElement(mod.default)))
