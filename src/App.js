@@ -6,7 +6,13 @@
 
 import * as store from "./store"
 
+const useIsoLayoutEffect = typeof window === "undefined" ? React.useEffect : React.useLayoutEffect
+
 ////////////////////////////////////////////////////////////////////////////////
+
+function getPathname() {
+	return typeof window === "undefined" ? "/" : window.location.pathname
+}
 
 function getBrowserPath(pathname) {
 	let out = pathname
@@ -21,19 +27,14 @@ function getBrowserPath(pathname) {
 }
 
 const routerStore = store.createStore({
-	path: (() => {
-		if (typeof window === "undefined") {
-			return "/"
-		}
-		return getBrowserPath(window.location.pathname)
-	})(),
+	path: getBrowserPath(getPathname()),
 	type: "PUSH",
 	scrollTo: [0, 0],
 })
 
-function useRouterState() {
-	return store.useStoreState(routerStore)
-}
+// function useRouterState() {
+// 	return store.useStoreState(routerStore)
+// }
 
 function Link({ path, scrollTo, children, ...props }) {
 	const setRouter = store.useStoreSetState(routerStore)
@@ -53,28 +54,28 @@ function Link({ path, scrollTo, children, ...props }) {
 	)
 }
 
-function deduped(path) {
-	const p1 = getBrowserPath(window.location.pathname)
-	const p2 = getBrowserPath(path)
-	return p1 === p2
+function distinct(path) {
+	const p1 = getBrowserPath(path)
+	const p2 = getBrowserPath(getPathname())
+	return p1 !== p2
 }
 
 function useRouter() {
 	const [router, setRouter] = store.useStore(routerStore)
 
-	React.useEffect(() => {
+	useIsoLayoutEffect(() => {
 		function handlePopstate() {
 			setRouter({
 				type: "REPLACE",
-				path: utils.getBrowserPath(),
+				path: getBrowserPath(getPathname()),
 				scrollTo: [0, 0],
 			})
 		}
 
 		if (router.type === "PUSH") {
-			if (deduped(router.path)) window.history.pushState({}, "", getBrowserPath(router.path))
+			if (distinct(router.path)) window.history.pushState({}, "", getBrowserPath(router.path))
 		} else if (router.type === "REPLACE") {
-			if (deduped(router.path)) window.history.replaceState({}, "", getBrowserPath(router.path))
+			if (distinct(router.path)) window.history.replaceState({}, "", getBrowserPath(router.path))
 		}
 
 		if (router.scrollTo !== undefined) {
@@ -86,6 +87,8 @@ function useRouter() {
 		window.addEventListener("popstate", handlePopstate)
 		return () => window.removeEventListener("popstate", handlePopstate)
 	}, [router])
+
+	return router
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -169,19 +172,19 @@ const stylesheets = {
 
 function loadStylesheet(href) {
 	return new Promise((resolve, reject) => {
-		let s1 = document.getElementById("__stylesheet__")
+		const s1 = document.getElementsByClassName("__stylesheet__")?.[0]
 		const s2 = document.createElement("link")
-		s2.id = "__stylesheet__"
+		s2.className = "__stylesheet__"
 		s2.rel = "stylesheet"
 		s2.href = href
 		s2.onload = () => {
 			// Synchronously swap stylesheets
-			if (s1 !== null) {
-				document.head.removeChild(s1)
-			}
+			if (s1 !== undefined) document.head.removeChild(s1)
 			resolve()
 		}
 		s2.onerror = reject
+
+		// Mount s2 for onload and onerror
 		document.head.appendChild(s2)
 	})
 }
@@ -199,17 +202,16 @@ function Router({ path }) {
 	}
 }
 
-function sleep(forMS) {
-	return new Promise(resolve => setTimeout(resolve, forMS))
-}
+// function sleep(forMS) {
+// 	return new Promise(resolve => setTimeout(resolve, forMS))
+// }
 
 export default function App() {
-	const { path } = useRouterState()
-	const [Component, setComponent] = React.useState(() => () => <h1>Fallback</h1>)
+	const [Component, setComponent] = React.useState(() => () => null)
 
-	React.useLayoutEffect(() => {
+	const { path } = useRouter()
+	useIsoLayoutEffect(() => {
 		async function fn() {
-			await sleep(500)
 			await loadStylesheet(stylesheets[path])
 			setComponent(() => () => <Router path={path} />)
 		}
