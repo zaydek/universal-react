@@ -10,7 +10,7 @@ async function run() {
 			...common,
 
 			bundle: true,
-			entryPoints: ["src/App.js"],
+			entryPoints: ["src/App0.js"],
 			outfile: "out/app.esbuild.ssr.js",
 
 			// Dedupe React APIs
@@ -23,13 +23,14 @@ async function run() {
 
 		const mod = require(path.resolve("out/app.esbuild.ssr.js"))
 		const markup = ReactDOMServer.renderToString(React.createElement(mod.default))
+		console.log(markup)
 
-		const buffer = await fs.promises.readFile("out/index.html")
-
-		let contents = buffer.toString()
-		contents = contents.replace(/<div id="root">.*<\/div>$/m, `<div id="root">${markup}</div>`)
-
-		await fs.promises.writeFile("out/index.html", contents)
+		// const buffer = await fs.promises.readFile("out/index.html")
+		//
+		// let contents = buffer.toString()
+		// contents = contents.replace(/<div id="root">.*<\/div>$/m, `<div id="root">${markup}</div>`)
+		//
+		// await fs.promises.writeFile("out/index.html", contents)
 	} catch (error) {
 		console.error(error)
 		process.exit(0)
