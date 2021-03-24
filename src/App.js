@@ -67,39 +67,96 @@ function SlashFooBar() {
 	)
 }
 
-const stylesheets = {
-	"/": "/Slash.css",
-	"/foo": "/SlashFoo.css",
-	"/foo/bar": "/SlashFooBar.css",
+function useOnce(effect) {
+	const once = React.useRef(false)
+	if (!once.current) {
+		once.current = true
+		return () => {} // No-op
+	}
+	return effect
 }
 
+function useDebouncedEffect(effect, deps, debouncedMS) {
+	React.useEffect(() => {
+		const id = setTimeout(() => effect(debouncedMS), debouncedMS)
+		return () => clearTimeout(id)
+	}, [...deps, debouncedMS])
+}
+
+function useDebouncedLayoutEffect(effect, deps, debouncedMS) {
+	React.useEffect(() => {
+		const id = setTimeout(() => effect(debouncedMS), debouncedMS)
+		return () => clearTimeout(id)
+	}, [...deps, debouncedMS])
+}
+
+function sleep(forMS) {
+	return new Promise(resolve => setTimeout(resolve, forMS))
+}
+
+export default function App() {
+	const [count, setCount] = React.useState(() => 0)
+	const [delayedCount, setDelayedCount] = React.useState(() => count)
+
+	useDebouncedEffect(
+		useOnce(debouncedMS => {
+			async function fn() {
+				await sleep(1_000 - debouncedMS)
+				setDelayedCount(current => current + 1)
+			}
+			fn()
+		}),
+		[count],
+		250,
+	)
+
+	return React.useMemo(
+		() => (
+			<h1 onClick={() => setCount(current => current + 1)}>
+				{count}
+				<br />
+				{delayedCount}
+			</h1>
+		),
+		[delayedCount],
+	)
+}
+
+// const stylesheets = {
+// 	"/": "/Slash.css",
+// 	"/foo": "/SlashFoo.css",
+// 	"/foo/bar": "/SlashFooBar.css",
+// }
+//
 // export default function App() {
-// 	// Imports
 // 	const { Route, Router } = router
 //
 // 	const routerState = router.useRouter()
 // 	const [loadedCSS, setLoadedCSS] = React.useState(0)
 //
-// 	React.useLayoutEffect(() => {
-// 		// prettier-ignore
-// 		function loadCSS(href) {
+// 	const once = useOnce()
+// 	useDebouncedLayoutEffect(
+// 		once(() => {
+// 			// prettier-ignore
+// 			function loadCSS(href) {
 // 			return new Promise((resolve, reject) => {
-// 				setTimeout(() => {
 // 					const stylesheet = document.createElement("link")
 // 					stylesheet.rel = "stylesheet" // <link rel="stylesheet">
 // 					stylesheet.href = href        // <link href={href}>
 // 					stylesheet.onload = resolve
 // 					stylesheet.onerror = reject
 // 					document.head.appendChild(stylesheet)
-// 				}, 1_000)
 // 			})
 // 		}
-// 		async function load() {
-// 			await loadCSS(stylesheets[routerState.path])
-// 			setLoadedCSS(current => current + 1)
-// 		}
-// 		load()
-// 	}, [routerState.path])
+// 			async function load() {
+// 				await loadCSS(stylesheets[routerState.path])
+// 				setLoadedCSS(current => current + 1)
+// 			}
+// 			load()
+// 		}),
+// 		[routerState.path],
+// 		1_000,
+// 	)
 //
 // 	return React.useMemo(
 // 		() => (
@@ -123,56 +180,3 @@ const stylesheets = {
 // 		[loadedCSS],
 // 	)
 // }
-
-function useOnce() {
-	const once = React.useRef(false)
-	return effect => {
-		if (!once.current) {
-			once.current = true
-			return
-		}
-		return effect
-	}
-}
-
-function useDebouncedEffect(effect, deps, debouncedMS) {
-	React.useEffect(() => {
-		const id = setTimeout(() => {
-			return effect()
-		}, debouncedMS)
-		return () => clearTimeout(id)
-	}, deps)
-}
-
-function sleep(forMS) {
-	return new Promise(resolve => setTimeout(resolve, forMS))
-}
-
-export default function App() {
-	const [count, setCount] = React.useState(() => 0)
-	const [delayedCount, setDelayedCount] = React.useState(() => count)
-
-	const once = useOnce()
-	useDebouncedEffect(
-		once(() => {
-			async function fn() {
-				await sleep(750)
-				setDelayedCount(current => current + 1)
-			}
-			fn()
-		}),
-		[count],
-		1_000,
-	)
-
-	return React.useMemo(
-		() => (
-			<h1 onClick={() => setCount(current => current + 1)}>
-				{count}
-				<br />
-				{delayedCount}
-			</h1>
-		),
-		[delayedCount],
-	)
-}
