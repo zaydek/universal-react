@@ -2,11 +2,93 @@
 // import "./SlashFoo.css"
 // import "./SlashFooBar.css"
 
-import * as router from "./router"
+// import * as router from "./router"
 
-// // On the server, use useEffect
-// const useIsoLayoutEffect = typeof window === "undefined" ? React.useEffect : React.useLayoutEffect
-// // console.log(typeof window === "undefined" ? "server" : "client")
+import * as store from "./store"
+
+////////////////////////////////////////////////////////////////////////////////
+
+function getBrowserPath(pathname) {
+	let out = pathname
+	if (pathname.endsWith("/index.html")) {
+		out = pathname.slice(pathname, -"index.html".length) // Keep "/"
+	} else if (pathname.endsWith("/index")) {
+		out = pathname.slice(pathname, -"index".length) // Keep "/"
+	} else if (pathname.endsWith(".html")) {
+		out = pathname.slice(pathname, -".html".length)
+	}
+	return out
+}
+
+const routerStore = store.createStore({
+	path: (() => {
+		if (typeof window === "undefined") {
+			return "/"
+		}
+		return getBrowserPath(window.location.pathname)
+	})(),
+	type: "PUSH",
+	scrollTo: [0, 0],
+})
+
+function useRouterState() {
+	return store.useStoreState(routerStore)
+}
+
+function Link({ path, scrollTo, children, ...props }) {
+	const setRouter = store.useStoreSetState(routerStore)
+
+	function handleClick(e) {
+		e.preventDefault()
+		setRouter({ type: "PUSH", path, scrollTo })
+	}
+
+	const scoped = path.startsWith("/")
+	return (
+		// prettier-ignore
+		<a href={path} target={scoped ? undefined : "_blank"} rel={scoped ? undefined : "noreferrer noopener"}
+				onClick={scoped ? handleClick : undefined} {...props}>
+			{children}
+		</a>
+	)
+}
+
+function deduped(path) {
+	const p1 = getBrowserPath(window.location.pathname)
+	const p2 = getBrowserPath(path)
+	return p1 === p2
+}
+
+function useRouter() {
+	const [router, setRouter] = store.useStore(routerStore)
+
+	React.useEffect(() => {
+		function handlePopstate() {
+			setRouter({
+				type: "REPLACE",
+				path: utils.getBrowserPath(),
+				scrollTo: [0, 0],
+			})
+		}
+
+		if (router.type === "PUSH") {
+			if (deduped(router.path)) window.history.pushState({}, "", getBrowserPath(router.path))
+		} else if (router.type === "REPLACE") {
+			if (deduped(router.path)) window.history.replaceState({}, "", getBrowserPath(router.path))
+		}
+
+		if (router.scrollTo !== undefined) {
+			const x = !Array.isArray(scrollTo) ? 0 : scrollTo[0]
+			const y = !Array.isArray(scrollTo) ? scrollTo : scrollTo[1]
+			window.scrollTo(x, y)
+		}
+
+		window.addEventListener("popstate", handlePopstate)
+		return () => window.removeEventListener("popstate", handlePopstate)
+	}, [router])
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 function Nav() {
 	const paths = ["/", "/foo", "/foo/bar"]
@@ -14,34 +96,14 @@ function Nav() {
 		<ul>
 			{paths.map(path => (
 				<li key={path}>
-					<router.Link path={path}>
+					<Link path={path}>
 						<>{path}</>
-					</router.Link>
+					</Link>
 				</li>
 			))}
 		</ul>
 	)
 }
-
-// function CSS({ href, children }) {
-// 	// const [loadedCSS, setLoadedCSS] = useState(false)
-//
-// 	React.useLayoutEffect(() => {
-// 		let stylesheet = document.getElementById("__stylesheet__")
-// 		if (stylesheet === null) {
-// 			// Create __stylesheet__ (once)
-// 			const el = document.createElement("link")
-// 			el.setAttribute("id", "__stylesheet__")
-// 			el.setAttribute("rel", "stylesheet")
-// 			document.head.appendChild(el)
-// 			stylesheet = el
-// 		}
-// 		// stylesheet.removeAttribute("disabled")
-// 		stylesheet.setAttribute("href", href)
-// 	}, [href])
-//
-// 	return children
-// }
 
 function Slash() {
 	return (
@@ -76,59 +138,27 @@ function SlashFooBar() {
 	)
 }
 
-function useOnce(effect) {
-	const once = React.useRef(false)
-	if (!once.current) {
-		once.current = true
-		return () => {} // No-op
-	}
-	return effect
-}
-
-function useDebouncedEffect(effect, deps, debouncedMS) {
-	React.useEffect(() => {
-		const id = setTimeout(() => effect(debouncedMS), debouncedMS)
-		return () => clearTimeout(id)
-	}, [...deps, debouncedMS])
-}
-
-function useDebouncedLayoutEffect(effect, deps, debouncedMS) {
-	React.useEffect(() => {
-		const id = setTimeout(() => effect(debouncedMS), debouncedMS)
-		return () => clearTimeout(id)
-	}, [...deps, debouncedMS])
-}
-
-function sleep(forMS) {
-	return new Promise(resolve => setTimeout(resolve, forMS))
-}
-
-// export default function App() {
-// 	const [count, setCount] = React.useState(() => 0)
-// 	const [delayedCount, setDelayedCount] = React.useState(() => count)
+// function useOnce(effect) {
+// 	const once = React.useRef(false)
+// 	if (!once.current) {
+// 		once.current = true
+// 		return () => {} // No-op
+// 	}
+// 	return effect
+// }
 //
-// 	useDebouncedEffect(
-// 		useOnce(debouncedMS => {
-// 			async function fn() {
-// 				await sleep(1_000 - debouncedMS)
-// 				setDelayedCount(current => current + 1)
-// 			}
-// 			fn()
-// 		}),
-// 		[count],
-// 		250,
-// 	)
+// function useDebouncedEffect(effect, deps, debouncedMS) {
+// 	React.useEffect(() => {
+// 		const id = setTimeout(() => effect(debouncedMS), debouncedMS)
+// 		return () => clearTimeout(id)
+// 	}, [...deps, debouncedMS])
+// }
 //
-// 	return React.useMemo(
-// 		() => (
-// 			<h1 onClick={() => setCount(current => current + 1)}>
-// 				{count}
-// 				<br />
-// 				{delayedCount}
-// 			</h1>
-// 		),
-// 		[delayedCount],
-// 	)
+// function useDebouncedLayoutEffect(effect, deps, debouncedMS) {
+// 	React.useEffect(() => {
+// 		const id = setTimeout(() => effect(debouncedMS), debouncedMS)
+// 		return () => clearTimeout(id)
+// 	}, [...deps, debouncedMS])
 // }
 
 const stylesheets = {
@@ -169,12 +199,17 @@ function Router({ path }) {
 	}
 }
 
+function sleep(forMS) {
+	return new Promise(resolve => setTimeout(resolve, forMS))
+}
+
 export default function App() {
-	const { path } = router.useRouterState()
+	const { path } = useRouterState()
 	const [Component, setComponent] = React.useState(() => () => <h1>Fallback</h1>)
 
 	React.useLayoutEffect(() => {
 		async function fn() {
+			await sleep(500)
 			await loadStylesheet(stylesheets[path])
 			setComponent(() => () => <Router path={path} />)
 		}
