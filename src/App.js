@@ -124,13 +124,24 @@ const stylesheets = {
 // 	)
 // }
 
-function useDebouncedEffect(debouncedMS) {
-	return (func, deps) => {
-		React.useEffect(() => {
-			const id = setTimeout(func, debouncedMS)
-			return () => clearTimeout(id)
-		}, deps)
+function useOnce() {
+	const once = React.useRef(false)
+	return effect => {
+		if (!once.current) {
+			once.current = true
+			return
+		}
+		return effect
 	}
+}
+
+function useDebouncedEffect(effect, deps, debouncedMS) {
+	React.useEffect(() => {
+		const id = setTimeout(() => {
+			return effect()
+		}, debouncedMS)
+		return () => clearTimeout(id)
+	}, deps)
 }
 
 function sleep(forMS) {
@@ -141,16 +152,18 @@ export default function App() {
 	const [count, setCount] = React.useState(() => 0)
 	const [delayedCount, setDelayedCount] = React.useState(() => count)
 
-	const once = React.useRef(false)
-	useDebouncedEffect(250)(() => {
-		if (!once.current) return void (once.current = true)
-
-		async function load() {
-			await sleep(750)
-			setDelayedCount(current => current + 1)
-		}
-		load()
-	}, [count])
+	const once = useOnce()
+	useDebouncedEffect(
+		once(() => {
+			async function fn() {
+				await sleep(750)
+				setDelayedCount(current => current + 1)
+			}
+			fn()
+		}),
+		[count],
+		1_000,
+	)
 
 	return React.useMemo(
 		() => (

@@ -9,5 +9,5 @@ module.exports = {
 		".js": "jsx",
 	},
 	minify: env === "production",
-	// sourcemap: true,
+	sourcemap: true,
 }
