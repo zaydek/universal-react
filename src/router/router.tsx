@@ -23,7 +23,7 @@ const routerStore = store.createStore<RouterState>({
 	scrollTo: [0, 0],
 })
 
-export function useRouter(): RouterState {
+export function useRouterState(): RouterState {
 	return store.useStoreState(routerStore)
 }
 

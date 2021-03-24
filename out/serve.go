@@ -33,6 +33,7 @@ func main() {
 			http.ServeFile(w, r, "out/index.html")
 			return
 		}
+		// r.Header.Set("Content-Type", mime.TypeByExtension(ext))
 		http.ServeFile(w, r, filepath.Join("out", r.URL.Path))
 	})
 

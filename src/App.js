@@ -23,47 +23,56 @@ function Nav() {
 	)
 }
 
-function CSS({ href, children }) {
-	// const [loadedCSS, setLoadedCSS] = useState(false)
-
-	React.useLayoutEffect(() => {
-		let stylesheet = document.getElementById("__stylesheet__")
-		if (stylesheet === null) {
-			// Create __stylesheet__ (once)
-			const el = document.createElement("link")
-			el.setAttribute("id", "__stylesheet__")
-			el.setAttribute("rel", "stylesheet")
-			document.head.appendChild(el)
-			stylesheet = el
-		}
-		// stylesheet.removeAttribute("disabled")
-		stylesheet.setAttribute("href", href)
-	}, [href])
-
-	return children
-}
+// function CSS({ href, children }) {
+// 	// const [loadedCSS, setLoadedCSS] = useState(false)
+//
+// 	React.useLayoutEffect(() => {
+// 		let stylesheet = document.getElementById("__stylesheet__")
+// 		if (stylesheet === null) {
+// 			// Create __stylesheet__ (once)
+// 			const el = document.createElement("link")
+// 			el.setAttribute("id", "__stylesheet__")
+// 			el.setAttribute("rel", "stylesheet")
+// 			document.head.appendChild(el)
+// 			stylesheet = el
+// 		}
+// 		// stylesheet.removeAttribute("disabled")
+// 		stylesheet.setAttribute("href", href)
+// 	}, [href])
+//
+// 	return children
+// }
 
 function Slash() {
 	return (
-		<div className="Slash">
-			<h1>Hello, world! (/)</h1>
-		</div>
+		<>
+			<Nav />
+			<div className="Slash">
+				<h1>Hello, world! (/)</h1>
+			</div>
+		</>
 	)
 }
 
 function SlashFoo() {
 	return (
-		<div className="SlashFoo">
-			<h1>Hello, world! (/foo)</h1>
-		</div>
+		<>
+			<Nav />
+			<div className="SlashFoo">
+				<h1>Hello, world! (/foo)</h1>
+			</div>
+		</>
 	)
 }
 
 function SlashFooBar() {
 	return (
-		<div className="SlashFooBar">
-			<h1>Hello, world! (/foo/bar)</h1>
-		</div>
+		<>
+			<Nav />
+			<div className="SlashFooBar">
+				<h1>Hello, world! (/foo/bar)</h1>
+			</div>
+		</>
 	)
 }
 
@@ -94,89 +103,83 @@ function sleep(forMS) {
 	return new Promise(resolve => setTimeout(resolve, forMS))
 }
 
-export default function App() {
-	const [count, setCount] = React.useState(() => 0)
-	const [delayedCount, setDelayedCount] = React.useState(() => count)
-
-	useDebouncedEffect(
-		useOnce(debouncedMS => {
-			async function fn() {
-				await sleep(1_000 - debouncedMS)
-				setDelayedCount(current => current + 1)
-			}
-			fn()
-		}),
-		[count],
-		250,
-	)
-
-	return React.useMemo(
-		() => (
-			<h1 onClick={() => setCount(current => current + 1)}>
-				{count}
-				<br />
-				{delayedCount}
-			</h1>
-		),
-		[delayedCount],
-	)
-}
-
-// const stylesheets = {
-// 	"/": "/Slash.css",
-// 	"/foo": "/SlashFoo.css",
-// 	"/foo/bar": "/SlashFooBar.css",
-// }
-//
 // export default function App() {
-// 	const { Route, Router } = router
+// 	const [count, setCount] = React.useState(() => 0)
+// 	const [delayedCount, setDelayedCount] = React.useState(() => count)
 //
-// 	const routerState = router.useRouter()
-// 	const [loadedCSS, setLoadedCSS] = React.useState(0)
-//
-// 	const once = useOnce()
-// 	useDebouncedLayoutEffect(
-// 		once(() => {
-// 			// prettier-ignore
-// 			function loadCSS(href) {
-// 			return new Promise((resolve, reject) => {
-// 					const stylesheet = document.createElement("link")
-// 					stylesheet.rel = "stylesheet" // <link rel="stylesheet">
-// 					stylesheet.href = href        // <link href={href}>
-// 					stylesheet.onload = resolve
-// 					stylesheet.onerror = reject
-// 					document.head.appendChild(stylesheet)
-// 			})
-// 		}
-// 			async function load() {
-// 				await loadCSS(stylesheets[routerState.path])
-// 				setLoadedCSS(current => current + 1)
+// 	useDebouncedEffect(
+// 		useOnce(debouncedMS => {
+// 			async function fn() {
+// 				await sleep(1_000 - debouncedMS)
+// 				setDelayedCount(current => current + 1)
 // 			}
-// 			load()
+// 			fn()
 // 		}),
-// 		[routerState.path],
-// 		1_000,
+// 		[count],
+// 		250,
 // 	)
 //
 // 	return React.useMemo(
 // 		() => (
-// 			<div>
-// 				{JSON.stringify(loadedCSS)}
-//
-// 				<Nav />
-// 				<Router>
-// 					<Route path="/">
-// 						<Slash />
-// 					</Route>
-// 					<Route path="/foo">
-// 						<SlashFoo />
-// 					</Route>
-// 					<Route path="/foo/bar">
-// 						<SlashFooBar />
-// 					</Route>
-// 				</Router>
-// 			</div>
+// 			<h1 onClick={() => setCount(current => current + 1)}>
+// 				{count}
+// 				<br />
+// 				{delayedCount}
+// 			</h1>
 // 		),
-// 		[loadedCSS],
+// 		[delayedCount],
 // 	)
 // }
+
+const stylesheets = {
+	"/": "/Slash.css",
+	"/foo": "/SlashFoo.css",
+	"/foo/bar": "/SlashFooBar.css",
+}
+
+function loadStylesheet(href) {
+	return new Promise((resolve, reject) => {
+		let s1 = document.getElementById("__stylesheet__")
+		const s2 = document.createElement("link")
+		s2.id = "__stylesheet__"
+		s2.rel = "stylesheet"
+		s2.href = href
+		s2.onload = () => {
+			// Synchronously swap stylesheets
+			if (s1 !== null) {
+				document.head.removeChild(s1)
+			}
+			resolve()
+		}
+		s2.onerror = reject
+		document.head.appendChild(s2)
+	})
+}
+
+function Router({ path }) {
+	switch (path) {
+		case "/":
+			return <Slash />
+		case "/foo":
+			return <SlashFoo />
+		case "/foo/bar":
+			return <SlashFooBar />
+		default:
+			return <h1>404</h1>
+	}
+}
+
+export default function App() {
+	const { path } = router.useRouterState()
+	const [Component, setComponent] = React.useState(() => () => <h1>Fallback</h1>)
+
+	React.useLayoutEffect(() => {
+		async function fn() {
+			await loadStylesheet(stylesheets[path])
+			setComponent(() => () => <Router path={path} />)
+		}
+		fn()
+	}, [path])
+
+	return <Component />
+}
