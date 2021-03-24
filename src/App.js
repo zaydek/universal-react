@@ -58,7 +58,7 @@ function distinct(path) {
 	return p1 !== p2
 }
 
-function useRouter() {
+function useRouterEffects() {
 	const [router, setRouter] = store.useStore(routerStore)
 
 	useIsoLayoutEffect(() => {
@@ -87,6 +87,18 @@ function useRouter() {
 	}, [router])
 
 	return router
+}
+
+function useRouter() {
+	return store.useStore(routerStore)
+}
+
+function useRouterState() {
+	return store.useStoreState(routerStore)
+}
+
+function useRouterSetState() {
+	return store.useStoreSetState(routerStore)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -208,7 +220,7 @@ function Router({ path }) {
 export default function App() {
 	const [Component, setComponent] = React.useState(() => () => null)
 
-	const { path } = useRouter()
+	const { path } = useRouterEffects()
 	useIsoLayoutEffect(() => {
 		async function fn() {
 			await loadAndMountStylesheet(stylesheets[path])
