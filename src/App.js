@@ -2,8 +2,6 @@
 // import "./SlashFoo.css"
 // import "./SlashFooBar.css"
 
-// import * as router from "./router"
-
 import * as store from "./store"
 
 const useIsoLayoutEffect = typeof window === "undefined" ? React.useEffect : React.useLayoutEffect
@@ -32,9 +30,9 @@ const routerStore = store.createStore({
 	scrollTo: [0, 0],
 })
 
-// function useRouterState() {
-// 	return store.useStoreState(routerStore)
-// }
+function useRouterState() {
+	return store.useStoreState(routerStore)
+}
 
 function Link({ path, scrollTo, children, ...props }) {
 	const setRouter = store.useStoreSetState(routerStore)
@@ -64,7 +62,7 @@ function useRouter() {
 	const [router, setRouter] = store.useStore(routerStore)
 
 	useIsoLayoutEffect(() => {
-		function handlePopstate() {
+		function handlePopState() {
 			setRouter({
 				type: "REPLACE",
 				path: getBrowserPath(getPathname()),
@@ -84,8 +82,8 @@ function useRouter() {
 			window.scrollTo(x, y)
 		}
 
-		window.addEventListener("popstate", handlePopstate)
-		return () => window.removeEventListener("popstate", handlePopstate)
+		window.addEventListener("popstate", handlePopState)
+		return () => window.removeEventListener("popstate", handlePopState)
 	}, [router])
 
 	return router
@@ -170,7 +168,7 @@ const stylesheets = {
 	"/foo/bar": "/SlashFooBar.css",
 }
 
-function loadStylesheet(href) {
+function loadAndMountStylesheet(href) {
 	return new Promise((resolve, reject) => {
 		const s1 = document.getElementsByClassName("__stylesheet__")?.[0]
 		const s2 = document.createElement("link")
@@ -178,12 +176,13 @@ function loadStylesheet(href) {
 		s2.rel = "stylesheet"
 		s2.href = href
 		s2.onload = () => {
-			// Synchronously swap stylesheets
 			if (s1 !== undefined) document.head.removeChild(s1)
 			resolve()
 		}
-		s2.onerror = reject
-
+		s2.onerror = () => {
+			if (s1 !== undefined) document.head.removeChild(s1)
+			reject()
+		}
 		// Mount s2 for onload and onerror
 		document.head.appendChild(s2)
 	})
@@ -212,7 +211,7 @@ export default function App() {
 	const { path } = useRouter()
 	useIsoLayoutEffect(() => {
 		async function fn() {
-			await loadStylesheet(stylesheets[path])
+			await loadAndMountStylesheet(stylesheets[path])
 			setComponent(() => () => <Router path={path} />)
 		}
 		fn()
